@@ -61,7 +61,7 @@ def select_file():
 
     filename = fd.askopenfilename(
         title='Open a file',
-        initialdir='/home/bruno/Documentos/',
+        initialdir='./CERTIFICATES',
         filetypes=filetypes)
 
     with open(filename, 'rb') as file:
