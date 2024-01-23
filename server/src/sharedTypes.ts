@@ -1,4 +1,4 @@
-import { VDocument } from './models/document.ts'
+import { VDocument } from './models/document'
 
 export type VerifiableCredential = {
   credentialSubject: any

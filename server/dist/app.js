@@ -1,56 +1,30 @@
-import express from 'express';
-import bodyParser from 'body-parser'
-// import 'jose';
-// import jsonLd from 'jsondl';
-
-
-
-
-import { VDocument } from './src/models/document'
-import { CompactSign, importPKCS8 } from 'jose'
-import { canonize, JsonLdDocument } from 'jsonld'
-import { staticDocumentLoader } from './src/utils/static-document-loader'
-import { sign } from './src/sign'
-
-
-
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const body_parser_1 = __importDefault(require("body-parser"));
+const sign_1 = require("./src/sign");
 const PORT = process.env.PORT || 5432;
-
-const app = express();
-
+const app = (0, express_1.default)();
 // parse application/x-www-form-urlencoded
-app.use(bodyParser.urlencoded({ extended: false }))
-
+app.use(body_parser_1.default.urlencoded({ extended: false }));
 // parse application/json
-app.use(bodyParser.json())
-
+app.use(body_parser_1.default.json());
 app.post("/", (request, response) => {
-    const json_credential = JSON.parse(request.body.credential)
-    const stringKey = request.body.key
-    const verificationMethod = request.body.verification_method
-    console.log(json_credential)
-    console.log(stringKey)
-    console.log(verificationMethod)
-    const signedCredential = sign(
-        stringKey,
-        json_credential,
-        verificationMethod
-    )
-
-
-
-
-    response.send(signedCredential)
-})
-
-
+    const json_credential = JSON.parse(request.body.credential);
+    const stringKey = request.body.key;
+    const verificationMethod = request.body.verification_method;
+    console.log(json_credential);
+    console.log(stringKey);
+    console.log(verificationMethod);
+    const signedCredential = (0, sign_1.sign)(stringKey, json_credential, verificationMethod);
+    response.send(signedCredential);
+});
 app.listen(PORT, () => {
     console.log("Server Listening on PORT:", PORT);
 });
-
-
-
-
 // async function normalize(payload: JsonLdDocument) {
 //     return await canonize(payload, {
 //         algorithm: 'URDNA2015',
@@ -58,11 +32,9 @@ app.listen(PORT, () => {
 //         documentLoader: staticDocumentLoader
 //     })
 // }
-
 // function hash(payload: string) {
 //     return computePayloadHash(payload)
 // }
-
 // async function computePayloadHash(payload: string) {
 //     const encoder = new TextEncoder()
 //     const data = encoder.encode(payload)
@@ -72,8 +44,6 @@ app.listen(PORT, () => {
 //         .map(b => b.toString(16).padStart(2, '0'))
 //         .join('')
 // }
-
-
 // const signVerifiableCredential = async (pemPrivateKey: string, verifiableCredential: any, verificationMethod: string): Promise<VDocument> => {
 //     // Step 1: Import key from the PEM format
 //     const rsaPrivateKey = await importPKCS8(pemPrivateKey, 'PS256')
@@ -81,10 +51,8 @@ app.listen(PORT, () => {
 //     const credentialNormalized = await normalize(verifiableCredential)
 //     const credentialHashed = await hash(credentialNormalized)
 //     const credentialEncoded = new TextEncoder().encode(credentialHashed)
-
 //     // Step 3: Sign
 //     const credentialJws = await new CompactSign(credentialEncoded).setProtectedHeader({ alg: 'PS256', b64: false, crit: ['b64'] }).sign(rsaPrivateKey)
-
 //     // Step 4: Add the signature to the verifiable credential
 //     return {
 //         ...verifiableCredential,

@@ -12,7 +12,7 @@ import subprocess
 # from jose import jwt
 import json
 
-server_process = subprocess.Popen('cd server && npm run dev', shell=True)
+server_process = subprocess.Popen('cd server && npm start', shell=True)
 
 # create the root window
 root = Tk()
