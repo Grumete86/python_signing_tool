@@ -1,5 +1,5 @@
 import { JsonLdDocument } from 'jsonld'
-import { CredentialFormats, VerifiableCredential } from '../sharedTypes.ts'
+import { CredentialFormats, VerifiableCredential } from '../sharedTypes'
 
 export type ShapeName = string | string[]
 
