@@ -22,9 +22,9 @@ root = Tk()
 root.title('Tkinter Open File Dialog')
 root.resizable(False, False)
 # root.geometry('1024x1280')
-screen_width= root.winfo_screenwidth()               
-screen_height= root.winfo_screenheight()               
-root.geometry("%dx%d" % (screen_width, screen_height))
+# screen_width= root.winfo_screenwidth()               
+# screen_height= root.winfo_screenheight()               
+# root.geometry("%dx%d" % (screen_width, screen_height))
 json_request_data = {}
 
 default_verification_method = 'did:web:blablabla.com'
@@ -84,23 +84,28 @@ def select_file():
         for i in pkcs12.additional_certs:
             message += ' \r' + pkcs12.additional_certs[i].friendly_name
         
-        boton2.pack(anchor="n", fill="both")
+        # boton2.pack(anchor="n", fill="both")
         boton.config(text =  message)
-        boton.pack(anchor="n", fill="both")
+        boton2.config(state="enabled")
         global input01
         global input02
-
-        input01 = Text(root)
-        input02 = Text(root)
+        label01 = Label(frame1)
+        label01.config(text="Verification Method")
+        label02 = Label(frame1)
+        label02.config(text="Content")
+        input01 = Text(frame1)
+        input02 = Text(frame1)
         input01.insert(INSERT, default_verification_method)
         input02.insert(INSERT, json_string)
 
-        input01.config(height=24)
-        input02.config(height=400)
 
-        input01.pack(anchor="nw")
-        input02.pack(anchor="nw")
+        # input01.config(height=24)
+        # input02.config(height=400)
 
+        label01.pack(anchor="n")
+        input01.pack(anchor="n")
+        label02.pack(anchor="n")
+        input02.pack(anchor="n")
 
         
         request_data= {'key':privateBytes.decode("utf-8")}
@@ -132,12 +137,15 @@ def call_server():
 
     json_response = response.json()
     formatted_json_response = json.dumps(json_response, indent=4)
-    input01.pack_forget()
-    input02.pack_forget()
-    texto0 = Text(root)
+    # input01.pack_forget()
+    # input02.pack_forget()
+    label03 = Label(frame2)
+    label03.config(text="Signed Content")
+    texto0 = Text(frame2)
     texto0.insert(INSERT, formatted_json_response)
-    texto0.config(height = screen_height)
-    texto0.pack(anchor="e")
+    # texto0.config(height = screen_height)
+    label03.pack(anchor="e", fill="both")
+    texto0.pack(anchor="e", fill="both",expand=True)
     # showinfo(
     #     title='JWS Signature',
     #     message= json_response['proof']['jws']
@@ -145,20 +153,28 @@ def call_server():
     close_process = subprocess.run('fuser -k 5432/tcp', shell=True)
     server_process.terminate()
 
-
+frame0= Frame(root)
+frame1 = Frame(root)
+frame2 = Frame(root)
 
 boton=ttk.Button(
-    root,
+    frame0,
     text='Escoge un certificado para firmar el documento',
     command=select_file
 )
-boton2=ttk.Button(root,
+boton2=ttk.Button(frame0,
     text='Solicitud al servidor',
-    command=call_server
+    command=call_server,
+    state='disabled'
 )
 
 
-boton.pack(anchor="n")
+boton.pack(anchor="n",fill="both")
+boton2.pack(anchor="n",fill="both")
+
+frame0.pack(side="top",fill="both")
+frame1.pack(side="left")
+frame2.pack(side="right", fill="y", expand=True)
 
 # input01 = Text(root)
 # input02 = Text(root)
