@@ -12,16 +12,22 @@ import subprocess
 # from jose import jwt
 import json
 
+
+close_process = subprocess.run('fuser -k 5432/tcp', shell=True)
 server_process = subprocess.Popen('cd server && npm start', shell=True)
+
 
 # create the root window
 root = Tk()
 root.title('Tkinter Open File Dialog')
 root.resizable(False, False)
-root.geometry('1280x1024')
+# root.geometry('1024x1280')
+screen_width= root.winfo_screenwidth()               
+screen_height= root.winfo_screenheight()               
+root.geometry("%dx%d" % (screen_width, screen_height))
 json_request_data = {}
 
-
+default_verification_method = 'did:web:blablabla.com'
 json_object = {
     "@context": [
         "https://www.w3.org/2018/credentials/v1",
@@ -72,22 +78,33 @@ def select_file():
         publicKey = key.public_key()
         publicBytes = publicKey.public_bytes(Encoding.PEM, PublicFormat.PKCS1)
         publicNumbers = publicKey.public_numbers()
-        privateBytes = key.private_bytes(Encoding.PEM, PrivateFormat.TraditionalOpenSSL, NoEncryption())
+        privateBytes = key.private_bytes(Encoding.PEM, PrivateFormat.PKCS8, NoEncryption())
         message = cert.friendly_name 
 
         for i in pkcs12.additional_certs:
             message += ' \r' + pkcs12.additional_certs[i].friendly_name
         
         boton2.pack(anchor="n", fill="both")
-        texto0.config(text =  message)
-        texto0.pack(anchor="n", fill="both", expand=True)
-        # texto1.config(text = publicBytes)
-        # texto1.pack(anchor="n", fill="both", expand=True)
-        # texto2.config(text = privateBytes)
-        # texto2.pack(anchor="n", fill="both", expand=True)
-        # request_data = {}
-        request_data= {'key':privateBytes.decode("utf-8"), 'credential':json_string, 'verification_method':'did:web:blablabla.com' }
-        # request_data = json_string
+        boton.config(text =  message)
+        boton.pack(anchor="n", fill="both")
+        global input01
+        global input02
+
+        input01 = Text(root)
+        input02 = Text(root)
+        input01.insert(INSERT, default_verification_method)
+        input02.insert(INSERT, json_string)
+
+        input01.config(height=24)
+        input02.config(height=400)
+
+        input01.pack(anchor="nw")
+        input02.pack(anchor="nw")
+
+
+        
+        request_data= {'key':privateBytes.decode("utf-8")}
+
         global json_request_data
         json_request_data = request_data
         
@@ -107,13 +124,26 @@ def select_file():
 
 def call_server():
     global json_request_data
-    
+    global input01
+    global input02
+    json_request_data['credential'] = input02.get("1.0",END)
+    json_request_data['verification_method'] = input01.get("1.0",END)
     response = requests.post("http://localhost:5432/",data=json_request_data)
-    texto0.config(text =  json.dumps(response))
-    showinfo(
-        title='Server sesponse',
-        message= response.text
-    )
+
+    json_response = response.json()
+    formatted_json_response = json.dumps(json_response, indent=4)
+    input01.pack_forget()
+    input02.pack_forget()
+    texto0 = Text(root)
+    texto0.insert(INSERT, formatted_json_response)
+    texto0.config(height = screen_height)
+    texto0.pack(anchor="e")
+    # showinfo(
+    #     title='JWS Signature',
+    #     message= json_response['proof']['jws']
+    # )
+    close_process = subprocess.run('fuser -k 5432/tcp', shell=True)
+    server_process.terminate()
 
 
 
@@ -128,17 +158,24 @@ boton2=ttk.Button(root,
 )
 
 
-boton.pack(anchor="n", fill="both")
-texto0 = ttk.Label(root, text='')
+boton.pack(anchor="n")
 
-# texto1 = ttk.Label(root, text='')
+# input01 = Text(root)
+# input02 = Text(root)
+# input01.insert(INSERT, default_verification_method)
+# input02.insert(INSERT, json_string)
 
-# texto2 = ttk.Label(root, text='')
+# input01.config(height=24)
+# input02.config(height=400)
+
+# input01.pack(anchor="nw")
+# input02.pack(anchor="nw")
+
 
 
 
 def on_closing():
-    server_process.terminate()
+
     close_process = subprocess.run('fuser -k 5432/tcp', shell=True)
     root.destroy()
 

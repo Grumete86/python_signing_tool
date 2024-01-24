@@ -28,19 +28,20 @@ app.post("/", (request, response) => {
     const json_credential = JSON.parse(request.body.credential)
     const stringKey = request.body.key
     const verificationMethod = request.body.verification_method
-    console.log(json_credential)
-    console.log(stringKey)
-    console.log(verificationMethod)
+    
     const signedCredential = sign(
         stringKey,
         json_credential,
         verificationMethod
     )
 
+    signedCredential
+    .then(cred => JSON.stringify(cred))
+    .then(json => response.send(json))
 
 
 
-    response.send(signedCredential)
+    
 })
 
 

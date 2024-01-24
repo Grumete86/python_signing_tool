@@ -16,11 +16,10 @@ app.post("/", (request, response) => {
     const json_credential = JSON.parse(request.body.credential);
     const stringKey = request.body.key;
     const verificationMethod = request.body.verification_method;
-    console.log(json_credential);
-    console.log(stringKey);
-    console.log(verificationMethod);
     const signedCredential = (0, sign_1.sign)(stringKey, json_credential, verificationMethod);
-    response.send(signedCredential);
+    signedCredential
+        .then(cred => JSON.stringify(cred))
+        .then(json => response.send(json));
 });
 app.listen(PORT, () => {
     console.log("Server Listening on PORT:", PORT);
