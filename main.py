@@ -8,11 +8,9 @@ from cryptography.hazmat.primitives.serialization.pkcs12 import load_pkcs12, PKC
 from cryptography.hazmat.primitives.asymmetric.rsa import  RSAPrivateKey, RSAPublicKey
 import requests
 import subprocess
-# from pyld import jsonld
-# from jose import jwt
 import json
 
-
+# kill previous app instances that exposes port:5432 - only works in linux
 close_process = subprocess.run('fuser -k 5432/tcp', shell=True)
 server_process = subprocess.Popen('cd server && npm start', shell=True)
 
@@ -21,12 +19,11 @@ server_process = subprocess.Popen('cd server && npm start', shell=True)
 root = Tk()
 root.title('Tkinter Open File Dialog')
 root.resizable(False, False)
-# root.geometry('1024x1280')
-# screen_width= root.winfo_screenwidth()               
-# screen_height= root.winfo_screenheight()               
-# root.geometry("%dx%d" % (screen_width, screen_height))
+
+# create objects to package in the request
 json_request_data = {}
 
+# default values in the inputs
 default_verification_method = 'did:web:blablabla.com'
 json_object = {
     "@context": [
@@ -56,39 +53,60 @@ json_object = {
         "id": "https://arlabdevelopments.com/.well-known/ArsysParticipant.json"
     }
 }
-
+# stringify credential
 json_string = json.dumps(json_object, indent=4)
+
+
+# function runned when we want to select a certificate file
 def select_file():
+    # definition of the system window to select the file,
+    # here we define the preset for the filetype
     filetypes = (
         ('archivos de intercambio de información personal', '*.pfx'),
         ('archivos de certificado', '*.cer'),
         ('All files', '*.*')
     )
 
+    # contextual window to open a system file
     filename = fd.askopenfilename(
         title='Open a file',
         initialdir='./CERTIFICATES',
         filetypes=filetypes)
 
+    # with the selected file (Certificate) we proceed to read and manage the data
     with open(filename, 'rb') as file:
         data = file.read()
-        pkcs12 = load_pkcs12(data, '123456'.encode())
+        # we set the password in a variable
+        password = '123456'.encode()
+        # charge the certificate in a cryptography object
+        pkcs12 = load_pkcs12(data, password)
+        # obtaining key and certificate from pfx12 certificate
+        # the only key format the gaia-X wizard understands is "PrivateFormat.PKCS8"
+        # the ***Bytes variables have the public and private keys in readable format
         key = pkcs12.key
         cert = pkcs12.cert
         publicKey = key.public_key()
         publicBytes = publicKey.public_bytes(Encoding.PEM, PublicFormat.PKCS1)
         publicNumbers = publicKey.public_numbers()
         privateBytes = key.private_bytes(Encoding.PEM, PrivateFormat.PKCS8, NoEncryption())
-        message = cert.friendly_name 
 
+        # reading the certificate chain to show in GUI
+        message = cert.friendly_name 
         for i in pkcs12.additional_certs:
             message += ' \r' + pkcs12.additional_certs[i].friendly_name
         
-        # boton2.pack(anchor="n", fill="both")
+        # Setting up the info 
+
+        # we show into the button which charges the certificate
+        # also enable the button that allows us to sign the document charged
         boton.config(text =  message)
         boton2.config(state="enabled")
+        # make this following variables accesible from all application
         global input01
         global input02
+        # showing the default values for the credential and the verification method
+        # they are in a modifiable text frame, the user can change the values 
+        # before proceed to sign 
         label01 = Label(frame1)
         label01.config(text="Verification Method")
         label02 = Label(frame1)
@@ -97,66 +115,55 @@ def select_file():
         input02 = Text(frame1)
         input01.insert(INSERT, default_verification_method)
         input02.insert(INSERT, json_string)
-
-
-        # input01.config(height=24)
-        # input02.config(height=400)
-
+        # we send the info to the interface
         label01.pack(anchor="n")
         input01.pack(anchor="n")
         label02.pack(anchor="n")
         input02.pack(anchor="n")
 
-        
-        request_data= {'key':privateBytes.decode("utf-8")}
-
+        # we call globally to the previously created variable json_request_data
+        # to save the private key
         global json_request_data
-        json_request_data = request_data
-        
-        # RSA_Private_Key = jwt.importPKCS8(privateBytes, 'PS256')
-        
+        json_request_data= {'key':privateBytes.decode("utf-8")}
 
-    # cert = x509.load_pem_x509_certificate(ca_cert)
-    # key = load_pem_private_key(ca_key, None)
-    # p12 = pkcs12.serialize_key_and_certificates(
-    #     b"friendlyname", key, cert, None, BestAvailableEncryption(b"password")
-    # )
-
-    # showinfo(
-    #     title='Selected File',
-    #     message= privateBytes
-    # )
+        
 
 def call_server():
+    # we will acceed and modify the following variable values
+    # then we charge them globally
     global json_request_data
     global input01
     global input02
+
+    # here we save the values of the text-boxes iin the request data 
     json_request_data['credential'] = input02.get("1.0",END)
     json_request_data['verification_method'] = input01.get("1.0",END)
+
+    #we make the request to the server who signs the document
+    # and save the response in a new variable
     response = requests.post("http://localhost:5432/",data=json_request_data)
 
+    # we parse the obtained value to be able to read the info as a JSON object
     json_response = response.json()
+    # to show the value in a text-box we need a readable format 
     formatted_json_response = json.dumps(json_response, indent=4)
-    # input01.pack_forget()
-    # input02.pack_forget()
+    # then we set up the interface
     label03 = Label(frame2)
     label03.config(text="Signed Content")
     texto0 = Text(frame2)
     texto0.insert(INSERT, formatted_json_response)
-    # texto0.config(height = screen_height)
     label03.pack(anchor="e", fill="both")
     texto0.pack(anchor="e", fill="both",expand=True)
-    # showinfo(
-    #     title='JWS Signature',
-    #     message= json_response['proof']['jws']
-    # )
+
+    # we close the server instance
     close_process = subprocess.run('fuser -k 5432/tcp', shell=True)
     server_process.terminate()
 
+
+# setting up the initial interface layout
 frame0= Frame(root)
 frame1 = Frame(root)
 frame2 = Frame(root)
-
 boton=ttk.Button(
     frame0,
     text='Escoge un certificado para firmar el documento',
@@ -167,36 +174,23 @@ boton2=ttk.Button(frame0,
     command=call_server,
     state='disabled'
 )
-
-
 boton.pack(anchor="n",fill="both")
 boton2.pack(anchor="n",fill="both")
-
 frame0.pack(side="top",fill="both")
 frame1.pack(side="left")
 frame2.pack(side="right", fill="y", expand=True)
 
-# input01 = Text(root)
-# input02 = Text(root)
-# input01.insert(INSERT, default_verification_method)
-# input02.insert(INSERT, json_string)
-
-# input01.config(height=24)
-# input02.config(height=400)
-
-# input01.pack(anchor="nw")
-# input02.pack(anchor="nw")
 
 
-
-
+# defining the closing behaviour
 def on_closing():
-
+    # in case the server is running we kill the process
     close_process = subprocess.run('fuser -k 5432/tcp', shell=True)
+    server_process.terminate()
     root.destroy()
 
+# setting the behaviour on close
 root.protocol("WM_DELETE_WINDOW", on_closing)
-
 
 # run the application
 root.mainloop()

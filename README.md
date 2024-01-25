@@ -2,6 +2,20 @@
 
 ### Versión python ###
 
+#### Funcionalidades implementadas #
+>SOLO HAPPY PATH
+- Interfaz gráfica de escritorio en python
+- Carga de certificado pfx12 a través de filesystem
+- Edición de did
+- Edición de payload
+- Lanzamiento desde terminal de Linux de servidor Nodejs en el puerto 5432
+- Proceso de firma de credencial de ejemplo 
+- Devuelve en pantalla la credencial firmada
+
+___
+ 
+
+
 - Clona el repositorio:
 ```
 $ git clone https://github.com/Grumete86/python_signing_tool.git
